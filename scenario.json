@@ -1,0 +1,37 @@
+{
+  "agent": "Weary",
+  "sessions": [
+    {
+      "session": 1,
+      "day": "2026-10-29",
+      "turns": [
+        "היי, אני רוצה להכניס את הארון שלי: חולצה לבנה, חולצה כחולה, סוודר ירוק, חצאית שחורה, חצאית כתומה, שמלת שבת כחולה כהה, חולצה אלגנטית בצבע שמנת לשבת, מעיל אפור, מגפיים שחורים, נעלי שבת שחורות, סניקרס לבנות.",
+        "כמה דברים שחשוב שתזכור עליי: אני גרה בירושלים. אני לובשת רק חולצה עם חצאית או שמלה, אף פעם לא מכנסיים או ג'ינס. אני לא אוהבת ירוק עם כתום. מגפיים אני נועלת רק בגשם עז, ואף פעם לא בשבת. בשבת אני לובשת רק בגדים אלגנטיים.",
+        "מה ללבוש היום?",
+        "לבשתי את החולצה הלבנה עם החצאית השחורה והמעיל, אהבתי!"
+      ]
+    },
+    {
+      "session": 2,
+      "day": "2026-10-30",
+      "turns": [
+        "בוקר טוב! מה ללבוש היום?",
+        "ומה ללבוש מחר בשבת?",
+        "הסוודר הירוק נקרע, תוציא אותו מהארון.",
+        "הכביסה מוכנה."
+      ]
+    }
+  ],
+  "checks": [
+    {"id": "wardrobe_saved",     "when": "after_session_1", "type": "item_count", "equals": 11},
+    {"id": "worn_to_laundry",    "when": "after_session_1", "type": "item_status", "name_contains": ["חולצה לבנה", "חצאית שחורה"], "status": "laundry"},
+    {"id": "coat_not_laundry",   "when": "after_session_1", "type": "item_status", "name_contains": ["מעיל"], "status": "clean"},
+    {"id": "city_remembered",    "when": "after_session_1", "type": "preference_contains", "any_of": ["Jerusalem", "ירושלים"]},
+    {"id": "boots_rule_saved",   "when": "after_session_1", "type": "item_field", "name_contains": "מגפיים", "field": "heavy_rain_only", "equals": true},
+    {"id": "city_from_memory",   "when": "end", "type": "tool_called", "turn": 5, "tool": "get_weather", "input_contains": {"city": ["Jerusalem", "ירושלים"]}},
+    {"id": "shabbat_planned",    "when": "end", "type": "tool_called", "turn": 6, "tool": "find_clothes", "input_contains": {"day": ["2026-10-31"]}},
+    {"id": "no_yesterday_shirt", "when": "end", "type": "text_not_contains", "turn": 5, "text": "חולצה לבנה"},
+    {"id": "torn_item_removed",  "when": "end", "type": "item_absent", "name_contains": "סוודר"},
+    {"id": "laundry_cleared",    "when": "end", "type": "no_status", "status": "laundry"}
+  ]
+}
