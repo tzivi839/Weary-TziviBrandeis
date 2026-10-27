@@ -1,0 +1,16 @@
+# Virtual environment
+.venv/
+
+
+# Python cache files
+__pycache__/
+*.pyc
+.pytest_cache/
+
+
+# Secrets - never upload!
+.env
+
+
+# Runtime state (recreated on each run)
+state/
