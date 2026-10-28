@@ -21,7 +21,7 @@ def log(msg):
     print(f"[loop.py] {msg}")
 
 
-def run_turn(client, messages, toolbox, *, model, effort, system, tools, max_tokens=2000):
+def run_turn(client, messages, toolbox, *, model, effort, system, tools, max_tokens=8000):
     """
     מריץ תור אחד. messages מתעדכנת במקום (מוסיפים לה את כל מה שקרה).
     מחזיר מילון עם הטקסט הסופי, הכלים שהופעלו, ה-usage של כל קריאה, והזמן.
@@ -42,6 +42,18 @@ def run_turn(client, messages, toolbox, *, model, effort, system, tools, max_tok
         )
         usages.append(resp.usage)
         log(f"call {call}: stop_reason={resp.stop_reason}")
+
+        if resp.stop_reason == "max_tokens":
+            # המודל נקטע באמצע (למשל באמצע בקשה לכלי). תשובה חתוכה לא נכנסת להיסטוריה:
+            # בלוק tool_use בלי tool_result היה שובר את כל הקריאות הבאות בשיחה.
+            log("ERROR answer was cut off (max_tokens) - not saved to history")
+            return {
+                "text": "(התשובה נקטעה כי הייתה ארוכה מדי. נסי לחלק את הבקשה לחלקים קטנים יותר.)",
+                "tools": tool_calls,
+                "usages": usages,
+                "model_calls": len(usages),
+                "seconds": round(time.time() - start, 2),
+            }
 
         # התשובה של המודל נכנסת להיסטוריה כמו שהיא, כולל בלוקי ה-tool_use
         messages.append({"role": "assistant", "content": resp.content})

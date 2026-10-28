@@ -77,3 +77,12 @@ def test_loop_stops_after_max_calls(tmp_path):
                for i in range(loop.MAX_CALLS)]
     weary = Weary(state_dir=tmp_path, day="2026-10-29", client=FakeClient(endless))
     assert weary.ask("...")["model_calls"] == loop.MAX_CALLS
+
+
+def test_cut_off_answer_is_not_saved(tmp_path):
+    # המודל נקטע באמצע בקשה לכלי: אסור שבלוק חתוך ייכנס להיסטוריה
+    client = FakeClient([([tool_use("t1", "add_item", {"name": "חצא"})], "max_tokens")])
+    weary = Weary(state_dir=tmp_path, day="2026-10-29", client=client)
+    result = weary.ask("הרבה בגדים...")
+    assert "נקטעה" in result["text"]
+    assert [m["role"] for m in weary.messages] == ["user"]   # רק ההודעה שלך נשארה
