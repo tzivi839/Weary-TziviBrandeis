@@ -7,6 +7,9 @@ agent.py - Weary עצמו: מחבר את כל חלקי ה-harness לסוכן א�
 הרצה לשיחה חופשית עם WearMe (מתיקיית הפרויקט):
     python API/agent.py
 """
+
+import truststore
+truststore.inject_into_ssl()
 import sys
 from datetime import date
 from pathlib import Path

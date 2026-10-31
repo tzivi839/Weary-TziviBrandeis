@@ -12,6 +12,8 @@ loop.py - האחריות: לולאת הסוכן. זה הלב של כל ה-harnes
   קריאה 2 -> המודל: find_clothes         -> מחזירים רשימת בגדים
   קריאה 3 -> המודל: "תלבשי את..."         -> stop_reason="end_turn", סוף התור
 """
+import truststore
+truststore.inject_into_ssl()
 import time
 
 MAX_CALLS = 10   # הגנה: אם משהו משתבש, לא נכנסים ללולאה אינסופית (ולא משלמים עליה)
