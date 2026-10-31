@@ -5,7 +5,7 @@ import json
 
 from API.agent import Weary
 from API.harness.history import History
-from tests.test_loop import FakeClient, text, tool_use
+from tests.test_loop import FakeClient, text, text_of, tool_use
 
 
 def test_new_session_continues_conversation(tmp_path):
@@ -24,7 +24,7 @@ def test_new_session_continues_conversation(tmp_path):
 
     sent = client2.sent[0]["messages"]
     assert sent[0]["content"] == "אני גרה בירושלים"   # המודל קיבל גם את סשן 1
-    assert sent[-1]["content"].endswith("בוקר טוב")  # ואחריה השאלה החדשה
+    assert text_of(sent[-1]).endswith("בוקר טוב")  # ואחריה השאלה החדשה
 
 
 def test_history_is_append_only(tmp_path):

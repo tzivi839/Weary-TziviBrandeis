@@ -5,7 +5,7 @@ from API.agent import Weary
 from API.harness.memory import Memory
 from shared.preferences import Preferences
 from shared.wardrobe import Wardrobe
-from tests.test_loop import FakeClient, text
+from tests.test_loop import FakeClient, text, text_of
 
 
 def test_recall_summarizes_preferences_and_outfits(tmp_path):
@@ -37,5 +37,5 @@ def test_new_session_knows_city_from_memory(tmp_path):
     # סשן 2: Weary חדש, בלי היסטוריית שיחה בכלל
     client = FakeClient([([text("בוקר טוב")], "end_turn")])
     Weary(state_dir=tmp_path, day="2026-10-30", client=client).ask("מה ללבוש?")
-    last = client.sent[0]["messages"][-1]["content"]
+    last = text_of(client.sent[0]["messages"][-1])
     assert "city: Jerusalem" in last          # המודל קיבל את זה ב-<context> של השאלה

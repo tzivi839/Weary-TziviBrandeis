@@ -21,6 +21,14 @@ def text(t):
     return NS(type="text", text=t)
 
 
+def text_of(message):
+    """הטקסט של הודעה, בין אם היא מחרוזת ובין אם רשימת בלוקים (כמו אחרי caching.py)."""
+    content = message["content"]
+    if isinstance(content, str):
+        return content
+    return "".join(b.get("text", "") for b in content if isinstance(b, dict))
+
+
 class FakeClient:
     def __init__(self, responses):
         self.responses = list(responses)

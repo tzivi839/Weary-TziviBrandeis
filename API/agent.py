@@ -1,8 +1,8 @@
 """
 agent.py - Weary עצמו: מחבר את כל חלקי ה-harness לסוכן אחד.
 
-בשלב הזה הוא מחבר את tools.py, loop.py, tokens.py, history.py, memory.py ו-context.py.
-בשלבים הבאים יתחברו לכאן גם caching ו-compaction.
+בשלב הזה הוא מחבר את tools.py, loop.py, tokens.py, history.py, memory.py, context.py
+ו-caching.py. בשלב הבא יתחבר לכאן גם compaction.
 
 הרצה לשיחה חופשית עם WearMe (מתיקיית הפרויקט):
     python API/agent.py            ממשיך את השיחה והארון מהפעם הקודמת
@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "API"))
 
 import anthropic                          # noqa: E402  (import אחרי שינוי ה-path, בכוונה)
-from harness import context, history, loop, memory, tokens, tools  # noqa: E402
+from harness import caching, context, history, loop, memory, tokens, tools  # noqa: E402
 
 MODEL = "claude-opus-5-5"
 EFFORT = "medium"   # אותו מודל ואותו effort גם בגרסת ה-SDK, כמו שהתרגיל דורש
@@ -50,7 +50,8 @@ class Weary:
         result = loop.run_turn(
             self.client, self.messages, self.toolbox,
             model=MODEL, effort=EFFORT, tools=tools.SCHEMAS,
-            build=lambda msgs: context.build(msgs, day_line, memory_text),
+            # לפני כל קריאה: context.py בוחר מה לשלוח, ו-caching.py מסמן מה לשמור ב-cache
+            build=lambda msgs: caching.apply(*context.build(msgs, day_line, memory_text)),
         )
         self.history.save_new(self.messages)
         result["tokens"] = self.meter.record(result["usages"])
