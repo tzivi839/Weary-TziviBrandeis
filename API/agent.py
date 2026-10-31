@@ -8,6 +8,8 @@ caching ו-compaction.
     python API/agent.py            ממשיך את השיחה והארון מהפעם הקודמת
     python API/agent.py --reset    מתחיל מאפס: מוחק את כל התיקייה state/
 """
+import truststore
+truststore.inject_into_ssl()
 import shutil
 import sys
 from datetime import date
