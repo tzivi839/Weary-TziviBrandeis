@@ -38,18 +38,38 @@ def to_jsonable(x):
 class History:
     def __init__(self, state_dir):
         self.path = Path(state_dir) / FILE_NAME
-        self.saved = 0   # כמה הודעות כבר נכתבו לדיסק
+        self.saved = 0           # כמה הודעות כבר נכתבו לדיסק
+        self.summary = None      # הסיכום האחרון (compaction.py), אם יש
+        self.summary_upto = 0    # כמה הודעות מתחילת השיחה הסיכום מחליף
 
     def load(self):
-        """קורא את כל השיחה מהדיסק. אם אין קובץ (סשן ראשון) - שיחה ריקה."""
+        """
+        קורא את כל השיחה מהדיסק. אם אין קובץ (סשן ראשון) - שיחה ריקה.
+        בקובץ יש שני סוגי שורות: {"message": ...} ו-{"summary": ..., "upto": N}.
+        """
         if not self.path.exists():
             log("no history yet - starting a new conversation")
             return []
-        lines = self.path.read_text(encoding="utf-8").splitlines()
-        messages = [json.loads(line)["message"] for line in lines if line.strip()]
+        messages = []
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            if "message" in record:
+                messages.append(record["message"])
+            else:                                  # שורת סיכום
+                self.summary, self.summary_upto = record["summary"], record["upto"]
         self.saved = len(messages)
-        log(f"loaded {len(messages)} messages from {self.path.name}")
+        log(f"loaded {len(messages)} messages from {self.path.name}"
+            + (f", summary covers first {self.summary_upto}" if self.summary else ""))
         return messages
+
+    def save_summary(self, summary, upto):
+        """מוסיף שורת סיכום. גם היא append: ההודעות המקוריות נשארות בקובץ."""
+        with self.path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({"summary": summary, "upto": upto}, ensure_ascii=False) + "\n")
+        self.summary, self.summary_upto = summary, upto
+        log(f"appended summary of the first {upto} messages")
 
     def save_new(self, messages):
         """מוסיף לסוף הקובץ רק את ההודעות שעוד לא נשמרו."""

@@ -1,8 +1,8 @@
 """
 agent.py - Weary עצמו: מחבר את כל חלקי ה-harness לסוכן אחד.
 
-בשלב הזה הוא מחבר את tools.py, loop.py, tokens.py, history.py, memory.py, context.py
-ו-caching.py. בשלב הבא יתחבר לכאן גם compaction.
+הוא מחבר את כל 8 הקבצים של harness/: tools, loop, tokens, history, memory, context,
+caching ו-compaction.
 
 הרצה לשיחה חופשית עם WearMe (מתיקיית הפרויקט):
     python API/agent.py            ממשיך את השיחה והארון מהפעם הקודמת
@@ -20,7 +20,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "API"))
 
 import anthropic                          # noqa: E402  (import אחרי שינוי ה-path, בכוונה)
-from harness import caching, context, history, loop, memory, tokens, tools  # noqa: E402
+from harness import (caching, compaction, context, history, loop,  # noqa: E402
+                     memory, tokens, tools)
 
 MODEL = "claude-opus-5-5"
 EFFORT = "medium"   # אותו מודל ואותו effort גם בגרסת ה-SDK, כמו שהתרגיל דורש
@@ -51,9 +52,19 @@ class Weary:
             self.client, self.messages, self.toolbox,
             model=MODEL, effort=EFFORT, tools=tools.SCHEMAS,
             # לפני כל קריאה: context.py בוחר מה לשלוח, ו-caching.py מסמן מה לשמור ב-cache
-            build=lambda msgs: caching.apply(*context.build(msgs, day_line, memory_text)),
+            build=lambda msgs: caching.apply(*context.build(
+                msgs, day_line, memory_text, self.history.summary, self.history.summary_upto)),
         )
         self.history.save_new(self.messages)
+
+        # אחרי התור: אם השיחה ארוכה מדי, מסכמים אותה (קריאה נוספת למודל)
+        summary_usage = compaction.maybe_compact(
+            self.client, self.messages, self.history, result["usages"], model=MODEL)
+        result["compacted"] = summary_usage is not None
+        if summary_usage:
+            result["usages"].append(summary_usage)
+            result["model_calls"] += 1
+
         result["tokens"] = self.meter.record(result["usages"])
         return result
 

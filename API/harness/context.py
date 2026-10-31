@@ -59,10 +59,16 @@ def _trim_tool_results(message):
     return {**message, "content": trimmed}, count
 
 
-def build(messages, day_line, memory_text):
-    """מקבל את כל השיחה ומחזיר (system, הודעות לשליחה)."""
-    turn_starts = [i for i, m in enumerate(messages) if _is_user_text(m)]
-    window_start = turn_starts[-MAX_TURNS] if len(turn_starts) > MAX_TURNS else 0
+def build(messages, day_line, memory_text, summary=None, summary_upto=0):
+    """
+    מקבל את כל השיחה ומחזיר (system, הודעות לשליחה).
+    אם יש סיכום (compaction.py): ההודעות שהוא מחליף לא נשלחות, והסיכום עצמו
+    נכנס ל-<context> של השאלה הנוכחית.
+    """
+    if summary:
+        memory_text += f"\nSummary of earlier conversation:\n{summary}"
+    turn_starts = [i for i, m in enumerate(messages) if _is_user_text(m) and i >= summary_upto]
+    window_start = turn_starts[-MAX_TURNS] if len(turn_starts) > MAX_TURNS else turn_starts[0]
     current = turn_starts[-1]   # איפה מתחיל התור הנוכחי
 
     to_send, trimmed = [], 0
