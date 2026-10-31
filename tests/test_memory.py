@@ -37,4 +37,5 @@ def test_new_session_knows_city_from_memory(tmp_path):
     # סשן 2: Weary חדש, בלי היסטוריית שיחה בכלל
     client = FakeClient([([text("בוקר טוב")], "end_turn")])
     Weary(state_dir=tmp_path, day="2026-10-30", client=client).ask("מה ללבוש?")
-    assert "city: Jerusalem" in client.sent[0]["system"]   # המודל קיבל את זה בהוראות
+    last = client.sent[0]["messages"][-1]["content"]
+    assert "city: Jerusalem" in last          # המודל קיבל את זה ב-<context> של השאלה

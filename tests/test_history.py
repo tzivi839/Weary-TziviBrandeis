@@ -24,7 +24,7 @@ def test_new_session_continues_conversation(tmp_path):
 
     sent = client2.sent[0]["messages"]
     assert sent[0]["content"] == "אני גרה בירושלים"   # המודל קיבל גם את סשן 1
-    assert sent[4]["content"] == "בוקר טוב"         # ואחריה השאלה החדשה
+    assert sent[-1]["content"].endswith("בוקר טוב")  # ואחריה השאלה החדשה
 
 
 def test_history_is_append_only(tmp_path):

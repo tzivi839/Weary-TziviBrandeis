@@ -1,15 +1,13 @@
 """
 agent.py - Weary עצמו: מחבר את כל חלקי ה-harness לסוכן אחד.
 
-בשלב הזה הוא מחבר את tools.py, loop.py, tokens.py, history.py ו-memory.py.
-בשלבים הבאים יתחברו לכאן גם context, caching ו-compaction.
+בשלב הזה הוא מחבר את tools.py, loop.py, tokens.py, history.py, memory.py ו-context.py.
+בשלבים הבאים יתחברו לכאן גם caching ו-compaction.
 
 הרצה לשיחה חופשית עם WearMe (מתיקיית הפרויקט):
     python API/agent.py            ממשיך את השיחה והארון מהפעם הקודמת
     python API/agent.py --reset    מתחיל מאפס: מוחק את כל התיקייה state/
 """
-import truststore
-truststore.inject_into_ssl()
 import shutil
 import sys
 from datetime import date
@@ -22,22 +20,12 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "API"))
 
 import anthropic                          # noqa: E402  (import אחרי שינוי ה-path, בכוונה)
-from harness import history, loop, memory, tokens, tools  # noqa: E402
+from harness import context, history, loop, memory, tokens, tools  # noqa: E402
 
 MODEL = "claude-opus-5-5"
 EFFORT = "medium"   # אותו מודל ואותו effort גם בגרסת ה-SDK, כמו שהתרגיל דורש
 
-SYSTEM = """You are Weary, the wardrobe assistant behind the WearMe app.
-Today is {day} ({weekday}).
-Answer in Hebrew, short and warm.
-Always use tools: get_weather before suggesting clothes, then find_clothes.
-Suggest one complete outfit (top + skirt, or a dress, plus shoes and outer layer if needed).
-Never invent items that are not in the wardrobe.
-Save anything the user tells you about themselves with save_preference.
-Use what you remember (below) without asking again, e.g. the user's city.
-
-What you remember about the user:
-{memory}"""
+# ההוראות (system prompt) עברו ל-context.py, שמחליט מה נשלח בכל קריאה
 
 
 class Weary:
@@ -53,17 +41,16 @@ class Weary:
         self.meter = tokens.Meter()
         self.memory = memory.Memory(state_dir)
 
-    def system_prompt(self):
-        weekday = date.fromisoformat(self.day).strftime("%A")
-        # הזיכרון נשלף מחדש בכל תור, כדי שיכלול גם מה שנשמר בתור הקודם
-        return SYSTEM.format(day=self.day, weekday=weekday, memory=self.memory.recall())
-
     def ask(self, text):
         self.messages.append({"role": "user", "content": text})
+        # הזיכרון נשלף פעם אחת בתחילת כל תור, כדי שיכלול גם מה שנשמר בתור הקודם
+        weekday = date.fromisoformat(self.day).strftime("%A")
+        day_line = f"Today is {self.day} ({weekday})."
+        memory_text = self.memory.recall()
         result = loop.run_turn(
             self.client, self.messages, self.toolbox,
-            model=MODEL, effort=EFFORT,
-            system=self.system_prompt(), tools=tools.SCHEMAS,
+            model=MODEL, effort=EFFORT, tools=tools.SCHEMAS,
+            build=lambda msgs: context.build(msgs, day_line, memory_text),
         )
         self.history.save_new(self.messages)
         result["tokens"] = self.meter.record(result["usages"])

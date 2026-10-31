@@ -12,8 +12,6 @@ loop.py - האחריות: לולאת הסוכן. זה הלב של כל ה-harnes
   קריאה 2 -> המודל: find_clothes         -> מחזירים רשימת בגדים
   קריאה 3 -> המודל: "תלבשי את..."         -> stop_reason="end_turn", סוף התור
 """
-import truststore
-truststore.inject_into_ssl()
 import time
 
 MAX_CALLS = 10   # הגנה: אם משהו משתבש, לא נכנסים ללולאה אינסופית (ולא משלמים עליה)
@@ -23,9 +21,11 @@ def log(msg):
     print(f"[loop.py] {msg}")
 
 
-def run_turn(client, messages, toolbox, *, model, effort, system, tools, max_tokens=8000):
+def run_turn(client, messages, toolbox, *, model, effort, build, tools, max_tokens=8000):
     """
     מריץ תור אחד. messages מתעדכנת במקום (מוסיפים לה את כל מה שקרה).
+    build היא פונקציה מ-context.py: מקבלת את כל השיחה ומחזירה (system, מה לשלוח).
+    היא נקראת לפני *כל* קריאה, כי בתוך תור השיחה גדלה (תוצאות כלים).
     מחזיר מילון עם הטקסט הסופי, הכלים שהופעלו, ה-usage של כל קריאה, והזמן.
     """
     start = time.time()
@@ -33,13 +33,14 @@ def run_turn(client, messages, toolbox, *, model, effort, system, tools, max_tok
     usages = []       # usage של כל קריאה למודל, בשביל tokens.py
 
     for call in range(1, MAX_CALLS + 1):
-        log(f"call {call}: sending {len(messages)} messages")
+        system, to_send = build(messages)
+        log(f"call {call}: sending {len(to_send)} messages")
         resp = client.messages.create(
             model=model,
             max_tokens=max_tokens,
             system=system,
             tools=tools,
-            messages=messages,
+            messages=to_send,
             output_config={"effort": effort},
         )
         usages.append(resp.usage)
