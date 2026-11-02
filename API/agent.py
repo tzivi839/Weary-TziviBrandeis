@@ -74,7 +74,7 @@ class Weary:
 if __name__ == "__main__":
     if "--reset" in sys.argv:
         shutil.rmtree(ROOT / "state", ignore_errors=True)
-        print("התחלה מאפס: הארון, ההעדפות וההיסטוריה נמחקו.")
+        print("[agent.py] reset: deleted state/ (wardrobe, preferences, history)")
     weary = Weary()
     print(f"👗 WearMe ({weary.day}). כתבי 'יציאה' כדי לסיים.\n")
     while True:

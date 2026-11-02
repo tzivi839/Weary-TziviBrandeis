@@ -33,3 +33,21 @@ def code_lines(path):
         if stripped and not stripped.startswith("#") and number not in skip:
             count += 1
     return count
+
+
+def replaces_lines(paths, parts):
+    """
+    ב-SDK: כמה שורות קוד מסומנות "# replaces: <part>", לכל part.
+    שורת הערה בלבד לא נספרת. למשל compaction ו-caching יוצאים 0,
+    כי ב-SDK אין להם שום קוד: Claude Code עושה אותם לבד.
+    """
+    counts = {part: 0 for part in parts}
+    for path in paths:
+        for line in Path(path).read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("#") or "# replaces:" not in stripped:
+                continue
+            part = stripped.split("# replaces:")[1].strip().split()[0]
+            if part in counts:
+                counts[part] += 1
+    return counts
